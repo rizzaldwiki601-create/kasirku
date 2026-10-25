@@ -22,6 +22,13 @@ class KasirkuTest extends TestCase
         ])->assertSessionHasErrors('email');
     }
 
+    public function test_https_forwarded_by_render_proxy_is_used_for_asset_urls(): void
+    {
+        $this->get('/login', ['X-Forwarded-Proto' => 'https'])
+            ->assertOk()
+            ->assertSee('href="https://', false);
+    }
+
     public function test_user_can_log_in_with_valid_credentials(): void
     {
         $user = User::factory()->create(['email' => 'admin@example.test']);

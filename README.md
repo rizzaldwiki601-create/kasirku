@@ -18,81 +18,93 @@ php artisan kasir:buat-admin
 
 Perintah tersebut meminta nama, email, dan kata sandi secara lokal; kata sandi tidak perlu dikirim melalui chat atau disimpan di source code.
 
-## Deploy ke Render dengan Docker
+## Deploy ke DockHosting dengan Docker
 
-Image produksi memakai PHP 8.3-FPM, Nginx, Supervisor, Composer, dan Node.js untuk membangun aset Vite. Container menerima port dari environment `PORT` yang disediakan Render (default lokal image: `10000`). Database produksi menggunakan PostgreSQL; database SQLite lokal tidak disertakan dalam image.
+Image produksi menggunakan PHP 8.3-FPM, Nginx, Supervisor, Composer, dan Node.js untuk membangun aset Vite. Nginx mendengarkan port `PORT` yang diberikan DockHosting; MySQL 8 menjadi database produksi. File `.env`, database SQLite lokal, dan dependensi development dikecualikan dari Docker build context.
 
-### 1. Siapkan PostgreSQL di Render
+Panduan ini mengikuti [Quickstart DockHosting](https://docs.dockhosting.dev/docs/quickstart), [panduan Docker](https://docs.dockhosting.dev/docs/deploying/docker), [panduan Laravel](https://docs.dockhosting.dev/docs/deploying/laravel), dan [dokumentasi database](https://docs.dockhosting.dev/docs/databases).
 
-1. Push proyek ke repositori GitHub.
-2. Di Render, buat **PostgreSQL**. Pilih region yang sama dengan Web Service.
-3. Buat **Web Service** dari repositori ini dan pilih **Docker** sebagai runtime.
-4. Pilih **Dockerfile Path** `./Dockerfile` dan **Docker Build Context Directory** `.`.
-5. Jika Web Service memiliki pengaturan health check, set path ke `/up`.
-6. Salin **Internal Database URL** dari PostgreSQL Render. Gunakan URL internal, bukan URL eksternal, untuk koneksi antarlayanan Render.
+### 1. Buat akun dan instal CLI
 
-### 2. Atur environment Web Service
+1. Daftar di [app.dockhosting.dev/register](https://app.dockhosting.dev/register). Dokumentasi menyebut paket Free tidak memerlukan kartu kredit.
+2. Di PowerShell Windows, gunakan perintah installer resmi dari Quickstart:
 
-Set variabel berikut pada halaman **Environment** Web Service. Jangan menaruh nilainya di repository atau Dockerfile.
+   ```powershell
+   irm https://get.dockhosting.dev/install.ps1 | iex
+   ```
+
+3. Buka terminal baru dan verifikasi instalasi:
+
+   ```powershell
+   dock --version
+   dock --help
+   ```
+
+Ikuti proses login resmi melalui CLI/dashboard bila diminta. Jangan kirim password atau token ke chat dan jangan menyimpan token di source code.
+
+### 2. Hubungkan database MySQL
+
+Attach database MySQL 8 yang sudah dibuat ke project aplikasi. DockHosting menyediakan connection string melalui private network dan memasukkan variabel koneksi ke environment project. Gunakan nama variabel yang tercantum di tab **Connection** database. Untuk project ini, tab tersebut menampilkan `DATABASE_URL` dengan format `mysql://...` serta `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD`. `DB_CONNECTION` harus bernilai `mysql`; image menetapkannya sebagai default, kecuali jika ditimpa oleh environment project.
+
+Di **Project Settings → Environment**, atur:
 
 | Key | Nilai |
 | --- | --- |
 | `APP_NAME` | `KASIRKU` |
 | `APP_ENV` | `production` |
 | `APP_DEBUG` | `false` |
-| `APP_KEY` | Kunci baru yang dibuat dengan `php artisan key:generate --show`; simpan hanya di Render |
-| `APP_URL` | URL HTTPS Web Service Render, misalnya `https://nama-service.onrender.com` |
+| `APP_KEY` | Kunci baru yang dibuat lokal dengan `php artisan key:generate --show` |
+| `APP_URL` | URL HTTPS project DockHosting |
 | `LOG_CHANNEL` | `stderr` |
 | `LOG_LEVEL` | `info` |
-| `DB_CONNECTION` | `pgsql` |
-| `DB_URL` | Internal Database URL PostgreSQL Render |
+| `DB_CONNECTION` | `mysql` |
+| `DATABASE_URL` | Connection string MySQL privat `mysql://...` dari DockHosting; jangan salin nilainya ke Git atau chat |
 | `SESSION_DRIVER` | `database` |
 | `SESSION_SECURE_COOKIE` | `true` |
 | `CACHE_STORE` | `database` |
 | `QUEUE_CONNECTION` | `database` |
 
-Render mengatur `PORT` untuk proses Web Service; tidak perlu memasukkan port database ke `PORT`. Jika menggunakan pengaturan database terpisah alih-alih `DB_URL`, isi `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD` dari detail PostgreSQL Render. Jangan commit nilai kredensial.
+`DATABASE_URL` dibaca langsung oleh koneksi MySQL Laravel; konfigurasi juga menerima `DB_URL` bila Anda sengaja mengaturnya sendiri. Jangan membuat salinan kredensial di source code. Jangan menaruh URL, password, `APP_KEY`, atau rahasia lain dalam Git, Dockerfile, README, maupun chat. Buat `APP_KEY` satu kali dan pertahankan nilainya pada redeploy.
 
-Buat `APP_KEY` satu kali dari terminal lokal yang memiliki dependensi Composer:
+Konfigurasi container menetapkan `DB_CONNECTION=mysql`, mensyaratkan `APP_KEY` dan konfigurasi koneksi MySQL, menggunakan `PORT` dari platform, dan mengirim log Laravel/Nginx ke output container. Laravel mempercayai header forwarded protokol, port, serta alamat klien untuk reverse proxy; `APP_URL` harus memakai alamat HTTPS project.
+
+### 3. Deploy dan migrasikan database
+
+Dari root repository ini setelah akun, project, database MySQL, dan environment siap:
 
 ```powershell
-php artisan key:generate --show
+dock deploy
 ```
 
-Perintah tersebut hanya menampilkan kunci untuk disalin ke environment Render. Jangan menaruh kunci itu di Git, README, atau Dockerfile. Pertahankan nilai `APP_KEY` yang sama pada redeploy agar sesi dan data terenkripsi tetap dapat dibaca.
-
-Konfigurasi Laravel mempercayai header forwarded untuk alamat klien, port, dan protokol HTTPS dari reverse proxy Render. Header host tidak dipercaya; tetapkan `APP_URL` ke URL HTTPS publik agar URL console dan aset memakai host yang benar. Cookie sesi produksi disetel hanya untuk HTTPS.
-
-### 3. Deploy dan jalankan migrasi dengan aman
-
-Deploy Web Service setelah environment dan database siap. Periksa log build/startup; container tidak menjalankan migrasi atau seeder secara otomatis.
-
-Setelah Service dapat mengakses PostgreSQL, jalankan perintah berikut melalui Shell Web Service Render (jika tersedia pada plan Anda) atau **Pre-Deploy Command** Web Service:
+Periksa log deployment. Setelah container berhasil berjalan dan database terhubung, jalankan migrasi melalui one-off shell DockHosting atau deploy step jika tersedia:
 
 ```sh
 php artisan migrate --force
 ```
 
-Periksa bahwa perintah selesai tanpa error sebelum menggunakan aplikasi. Perintah ini menerapkan migrasi yang belum berjalan dan tidak menghapus tabel/data. Jangan taruh perintah migrasi di Docker entrypoint atau startup command, karena startup dapat berjalan berulang kali. Jangan gunakan `migrate:fresh`, `db:wipe`, atau menjalankan seeder untuk deployment ini.
+Jangan jalankan migrasi sebelum database produksi terkonfigurasi dan dapat diakses. Container tidak menjalankan migrasi atau seeder otomatis. Perintah migrasi di atas menerapkan perubahan yang tertunda; jangan gunakan `migrate:fresh`, `db:wipe`, atau seeder pada deployment ini.
 
-### 4. Buat akun admin produksi
-
-Setelah migrasi berhasil, jalankan perintah interaktif ini dari Shell Web Service yang menyediakan terminal interaktif:
+Setelah migrasi sukses, buat admin pertama melalui shell interaktif yang terhubung ke environment project:
 
 ```sh
 php artisan kasir:buat-admin
 ```
 
-Isi nama dan email di shell tersebut, lalu masukkan kata sandi minimal 8 karakter pada prompt tersembunyi. Jangan menyimpan atau mengirim kata sandi melalui GitHub, environment build, log, atau chat. Jika akun admin sudah tersedia, perintah akan menolak membuat admin pertama lagi; gunakan pengelolaan akun setelah login.
+Isi nama dan email pada shell, lalu masukkan kata sandi minimal 8 karakter saat prompt tersembunyi. Jangan menaruh kata sandi dalam source code, log, atau chat. Bila admin sudah ada, perintah akan menolak membuat admin pertama duplikat.
 
-## Catatan operasional
+Untuk melihat log build/runtime:
 
-- PostgreSQL Render menyimpan data produksi; container tidak menyimpan database aplikasi sebagai file.
-- File lokal `.env`, database SQLite, `vendor`, `node_modules`, log lokal, dan file tes dikecualikan dari Docker build context.
-- Laravel menulis log ke `stderr` agar tersedia pada log Web Service Render.
-- Migrasi produksi harus dijalankan secara eksplisit setelah database terkonfigurasi, bukan saat image dibangun atau setiap container mulai.
-- File deployment yang disediakan: `Dockerfile`, `.dockerignore`, dan konfigurasi di `docker/`.
-- Docker perlu tersedia untuk membangun atau menjalankan image secara lokal.
+```powershell
+dock logs --follow
+```
+
+### Paket gratis dan penyimpanan
+
+Dokumentasi DockHosting menyebut paket Free menyediakan hingga 3 project, 1 database, dan 1 GB RAM per aplikasi; aplikasi tidur ketika idle dan aktif kembali saat menerima request pertama. URL HTTPS subdomain DockHosting tersedia tanpa domain kustom. Database dikelola terpisah dan dapat di-attach lewat private network. Periksa [pricing resmi](https://docs.dockhosting.dev/docs/pricing-and-billing) untuk ketentuan terkini sebelum deployment.
+
+Database, sesi, cache, dan queue aplikasi ini memakai MySQL. SQLite tetap digunakan untuk development dan pengujian lokal. Container bersifat disposable; file di filesystem container bukan penyimpanan permanen, sehingga file unggahan pengguna (jika kelak ditambahkan) memerlukan volume persisten atau object storage.
+
+File deployment: `Dockerfile`, `.dockerignore`, dan konfigurasi di `docker/`. Docker lokal diperlukan hanya jika ingin membangun/menguji image di komputer sendiri.
 
 ## Fitur
 

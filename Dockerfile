@@ -12,6 +12,7 @@ RUN apt-get update \
         intl \
         mbstring \
         opcache \
+        pdo_mysql \
         pdo_pgsql \
         zip
 
@@ -48,7 +49,7 @@ FROM php:8.3-fpm-bookworm AS runtime
 
 ENV APP_ENV=production \
     APP_DEBUG=false \
-    DB_CONNECTION=pgsql \
+    DB_CONNECTION=mysql \
     LOG_CHANNEL=stderr \
     LOG_LEVEL=info \
     SESSION_SECURE_COOKIE=true

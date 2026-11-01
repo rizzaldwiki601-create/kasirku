@@ -27,7 +27,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', Rule::in(['admin', 'kasir'])],
+            'role' => ['required', Rule::in(['admin', 'kasir', 'demo'])],
         ]);
         User::create($data);
 
@@ -45,7 +45,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', Rule::in(['admin', 'kasir'])],
+            'role' => ['required', Rule::in(['admin', 'kasir', 'demo'])],
         ]);
 
         if ($user->role === 'admin' && $data['role'] !== 'admin' && User::where('role', 'admin')->count() <= 1) {

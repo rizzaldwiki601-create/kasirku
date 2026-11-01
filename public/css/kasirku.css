@@ -505,6 +505,15 @@ input::placeholder { color: #a2a8a2; }
 .login-card .button-full { justify-content: space-between; padding: 0 17px; font-size: 12px; }
 .login-card .button-full span { font-size: 15px; }
 .login-note { margin: 22px 0 0; text-align: left; }
+.demo-panel { margin-top: 22px; padding: 16px; border: 1px solid #d6e0d9; border-radius: 12px; background: #f3faf7; }
+.demo-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.demo-copy-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.demo-eyebrow { color: #2f7a61; font-size: 9px; letter-spacing: .12em; }
+.demo-panel p { margin: 0 0 12px; color: #4b675f; font-size: 11px; line-height: 1.6; }
+.demo-credentials { display: grid; gap: 10px; }
+.demo-credentials label { display: grid; gap: 6px; color: #3a4a42; font-size: 10px; font-weight: 650; }
+.demo-credentials input { min-height: 38px; font-size: 11px; }
+.demo-login-form { margin-top: 12px; }
 .login-copyright { margin-top: auto; padding-top: 42px; color: #909891; font-size: 9px; letter-spacing: .015em; }
 .login-copyright span { padding: 0 5px; color: #c4c9c3; }
 

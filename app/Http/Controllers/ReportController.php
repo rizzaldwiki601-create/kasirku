@@ -17,6 +17,7 @@ class ReportController extends Controller
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
         $sales = Sale::query()
+            ->when($request->user()->role === 'demo', fn ($query) => $query->where('user_id', $request->user()->id))
             ->when(isset($filters['start_date']), fn ($query) => $query->whereDate('sold_at', '>=', $filters['start_date']))
             ->when(isset($filters['end_date']), fn ($query) => $query->whereDate('sold_at', '<=', $filters['end_date']));
 

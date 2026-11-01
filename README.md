@@ -63,6 +63,9 @@ Di **Project Settings → Environment**, atur:
 | `SESSION_SECURE_COOKIE` | `true` |
 | `CACHE_STORE` | `database` |
 | `QUEUE_CONNECTION` | `database` |
+| `DEMO_LOGIN_ENABLED` | `true` untuk mengaktifkan panel dan command akun demo |
+| `DEMO_LOGIN_EMAIL` | `demo@kasirku.test` |
+| `DEMO_LOGIN_PASSWORD` | Kata sandi demo tetap, disetel hanya di environment DockHosting |
 
 `DATABASE_URL` dibaca langsung oleh koneksi MySQL Laravel; konfigurasi juga menerima `DB_URL` bila Anda sengaja mengaturnya sendiri. Jangan membuat salinan kredensial di source code. Jangan menaruh URL, password, `APP_KEY`, atau rahasia lain dalam Git, Dockerfile, README, maupun chat. Buat `APP_KEY` satu kali dan pertahankan nilainya pada redeploy.
 
@@ -91,6 +94,8 @@ php artisan kasir:buat-admin
 ```
 
 Isi nama dan email pada shell, lalu masukkan kata sandi minimal 8 karakter saat prompt tersembunyi. Jangan menaruh kata sandi dalam source code, log, atau chat. Bila admin sudah ada, perintah akan menolak membuat admin pertama duplikat.
+
+Untuk menyiapkan akun demo, atur `DEMO_LOGIN_EMAIL` dan `DEMO_LOGIN_PASSWORD` di environment project DockHosting. Setelah deployment dan koneksi database produksi diperiksa, jalankan `php artisan kasir:buat-demo` melalui shell project. Perintah hanya membuat akun dengan role `demo`, menyimpan password menggunakan hash Laravel, dan tidak mengganti password/role akun yang sudah ada. Jika nilai password yang ada berbeda, perintah berhenti dan meminta environment ditinjau; perintah ini tidak menjalankan migrasi. Jangan jalankan perintah ini pada database lokal bila targetnya akun demo produksi. Kredensial yang dikonfigurasi akan ditampilkan pada panel login publik, jadi gunakan hanya kredensial demo.
 
 Untuk melihat log build/runtime:
 

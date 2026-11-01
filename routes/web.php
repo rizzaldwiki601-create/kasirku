@@ -19,28 +19,40 @@ Route::post('/logout', [AuthController::class, 'destroy'])->middleware('auth')->
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
-    Route::get('/kasir', [SaleController::class, 'pos'])->name('sales.pos');
-    Route::post('/kasir/keranjang', [SaleController::class, 'addToCart'])->name('sales.cart.add');
-    Route::patch('/kasir/keranjang/{product}', [SaleController::class, 'updateCart'])->name('sales.cart.update');
-    Route::delete('/kasir/keranjang/{product}', [SaleController::class, 'removeFromCart'])->name('sales.cart.remove');
-    Route::post('/kasir/checkout', [SaleController::class, 'checkout'])->name('sales.checkout');
+    Route::middleware('cashier')->group(function () {
+        Route::get('/kasir', [SaleController::class, 'pos'])->name('sales.pos');
+        Route::post('/kasir/keranjang', [SaleController::class, 'addToCart'])->name('sales.cart.add');
+        Route::patch('/kasir/keranjang/{product}', [SaleController::class, 'updateCart'])->name('sales.cart.update');
+        Route::delete('/kasir/keranjang/{product}', [SaleController::class, 'removeFromCart'])->name('sales.cart.remove');
+        Route::post('/kasir/checkout', [SaleController::class, 'checkout'])->name('sales.checkout');
+    });
 
     Route::get('/transaksi', [SaleController::class, 'index'])->name('sales.index');
     Route::get('/transaksi/{sale}/struk', [SaleController::class, 'receipt'])->name('sales.receipt');
     Route::get('/transaksi/{sale}', [SaleController::class, 'show'])->name('sales.show');
 
+    Route::middleware('admin-readonly')->group(function () {
+        Route::get('/kategori', [CategoryController::class, 'index'])->name('categories.index');
+        Route::get('/laporan', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/produk', [ProductController::class, 'index'])->name('products.index');
+    });
+
     Route::middleware('admin')->group(function () {
         Route::resource('kategori', CategoryController::class)
-            ->except('show')
+            ->except(['index', 'show'])
             ->parameters(['kategori' => 'category'])
             ->names('categories');
         Route::resource('produk', ProductController::class)
+            ->except(['index', 'show'])
             ->parameters(['produk' => 'product'])
             ->names('products');
-        Route::get('/laporan', [ReportController::class, 'index'])->name('reports.index');
         Route::resource('pengguna', UserController::class)
             ->except('show')
             ->parameters(['pengguna' => 'user'])
             ->names('users');
     });
+
+    Route::get('/produk/{product}', [ProductController::class, 'show'])
+        ->middleware('admin-readonly')
+        ->name('products.show');
 });

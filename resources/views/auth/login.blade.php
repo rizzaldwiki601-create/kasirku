@@ -36,6 +36,38 @@
                     <label class="checkbox-label"><input type="checkbox" name="remember" value="1"> Ingat saya</label>
                     <button class="button button-primary button-full" type="submit">Masuk <span aria-hidden="true">→</span></button>
                 </form>
+
+                @php
+                    $demoEmail = config('demo.login_email');
+                    $demoPassword = config('demo.login_password');
+                @endphp
+                @if(config('demo.login_enabled') && filled($demoEmail) && filled($demoPassword))
+                    <div class="demo-panel" aria-live="polite">
+                        <div class="demo-panel-header">
+                            <span class="eyebrow demo-eyebrow">AKSES DEMO KASIRKU</span>
+                            <span class="demo-copy-actions">
+                                <button class="button button-secondary button-small" type="button" data-copy-demo="demo-email">Salin Email</button>
+                                <button class="button button-secondary button-small" type="button" data-copy-demo="demo-password">Salin Password</button>
+                            </span>
+                        </div>
+                        <p>Gunakan akun demo untuk mencoba fitur tanpa mengubah data utama.</p>
+                        <div class="demo-credentials">
+                            <label>Email
+                                <input id="demo-email" type="text" value="{{ $demoEmail }}" readonly data-demo-email>
+                            </label>
+                            <label>Password
+                                <input id="demo-password" type="text" value="{{ $demoPassword }}" readonly data-demo-password>
+                            </label>
+                        </div>
+                        <form method="POST" action="{{ route('login.store') }}" class="demo-login-form">
+                            @csrf
+                            <input type="hidden" name="email" value="{{ $demoEmail }}">
+                            <input type="hidden" name="password" value="{{ $demoPassword }}">
+                            <button class="button button-primary button-full" type="submit">Masuk sebagai Demo</button>
+                        </form>
+                    </div>
+                @endif
+
                 <p class="login-note">Akun dikelola oleh administrator. Registrasi publik tidak tersedia.</p>
             </div>
             <span class="login-copyright">KASIRKU <span>·</span> Sistem penjualan dan persediaan</span>
@@ -50,6 +82,19 @@
             passwordToggle.textContent = visible ? 'Sembunyikan' : 'Tampilkan';
             passwordToggle.setAttribute('aria-label', visible ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
             passwordToggle.setAttribute('aria-pressed', String(visible));
+        });
+
+        document.querySelectorAll('[data-copy-demo]').forEach((copyButton) => {
+            copyButton.addEventListener('click', async () => {
+                const input = document.getElementById(copyButton.dataset.copyDemo);
+                if (!input) return;
+                try {
+                    await navigator.clipboard.writeText(input.value);
+                    copyButton.textContent = 'Disalin';
+                } catch (error) {
+                    copyButton.textContent = 'Salin gagal';
+                }
+            });
         });
     </script>
 </body>

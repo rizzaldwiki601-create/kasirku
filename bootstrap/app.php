@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureUserCanViewReadOnlyAdminPages;
+use App\Http\Middleware\EnsureUserCanOperateRegister;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
         );
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'admin-readonly' => EnsureUserCanViewReadOnlyAdminPages::class,
+            'cashier' => EnsureUserCanOperateRegister::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

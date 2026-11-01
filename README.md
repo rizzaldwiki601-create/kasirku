@@ -87,13 +87,13 @@ php artisan migrate --force
 
 Jangan jalankan migrasi sebelum database produksi terkonfigurasi dan dapat diakses. Container tidak menjalankan migrasi atau seeder otomatis. Perintah migrasi di atas menerapkan perubahan yang tertunda; jangan gunakan `migrate:fresh`, `db:wipe`, atau seeder pada deployment ini.
 
-Setelah migrasi sukses, buat admin pertama melalui shell interaktif yang terhubung ke environment project:
+Setelah migrasi yang memang diperlukan selesai, buat atau verifikasi admin melalui shell interaktif production yang terhubung ke MySQL:
 
 ```sh
 php artisan kasir:buat-admin
 ```
 
-Isi nama dan email pada shell, lalu masukkan kata sandi minimal 8 karakter saat prompt tersembunyi. Jangan menaruh kata sandi dalam source code, log, atau chat. Bila admin sudah ada, perintah akan menolak membuat admin pertama duplikat.
+Perintah menolak berjalan di luar `APP_ENV=production` atau selain koneksi MySQL. Isi email pada shell; untuk akun baru, isi nama dan kata sandi minimal 8 karakter pada prompt tersembunyi. Jika admin dengan email itu sudah ada, masukkan kata sandinya untuk verifikasi; akun dan password tidak diubah. Jangan menaruh kata sandi dalam source code, log, command-line argument, atau chat. Pastikan shell memakai database MySQL produksi sebelum menjalankan perintah.
 
 Untuk menyiapkan akun demo permanen, atur `DEMO_LOGIN_ENABLED=true`, `DEMO_LOGIN_EMAIL`, dan `DEMO_LOGIN_PASSWORD` di environment project DockHosting. Setelah deployment dan koneksi database produksi diperiksa, jalankan `php artisan kasir:buat-demo` melalui shell project. Perintah hanya membuat akun dengan role `demo`, menyimpan password menggunakan hash Laravel, dan tidak mengganti password/role akun yang sudah ada. Jika nilai password yang ada berbeda, perintah berhenti dan meminta environment ditinjau; perintah ini tidak menjalankan migrasi. Jangan jalankan perintah ini pada database lokal bila targetnya akun demo produksi. Panel login publik hanya menampilkan dan menyediakan tombol salin untuk kredensial demo; pengunjung masuk melalui form login biasa.
 

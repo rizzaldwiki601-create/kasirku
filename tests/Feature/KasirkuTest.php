@@ -41,6 +41,26 @@ class KasirkuTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
+    public function test_admin_creation_command_refuses_non_production_environment(): void
+    {
+        $this->artisan('kasir:buat-admin')
+            ->expectsOutput('Perintah ini hanya boleh dijalankan di environment production.')
+            ->assertExitCode(1);
+
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_admin_creation_command_refuses_non_mysql_production_connection(): void
+    {
+        $this->app['env'] = 'production';
+
+        $this->artisan('kasir:buat-admin')
+            ->expectsOutput('Perintah ini hanya boleh dijalankan dengan koneksi database MySQL.')
+            ->assertExitCode(1);
+
+        $this->assertDatabaseCount('users', 0);
+    }
+
     public function test_product_sku_must_be_unique(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

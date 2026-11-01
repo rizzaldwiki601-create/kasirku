@@ -205,7 +205,8 @@ class DemoAccessTest extends TestCase
             ->assertSee($password)
             ->assertSee('Salin Email')
             ->assertSee('Salin Password')
-            ->assertSee('Masuk sebagai Demo');
+            ->assertDontSee('Masuk sebagai Demo')
+            ->assertDontSee('demo-login-form');
         $this->post(route('login.store'), [
             'email' => $demo->email,
             'password' => $password,

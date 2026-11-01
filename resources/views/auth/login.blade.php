@@ -59,12 +59,6 @@
                                 <input id="demo-password" type="text" value="{{ $demoPassword }}" readonly data-demo-password>
                             </label>
                         </div>
-                        <form method="POST" action="{{ route('login.store') }}" class="demo-login-form">
-                            @csrf
-                            <input type="hidden" name="email" value="{{ $demoEmail }}">
-                            <input type="hidden" name="password" value="{{ $demoPassword }}">
-                            <button class="button button-primary button-full" type="submit">Masuk sebagai Demo</button>
-                        </form>
                     </div>
                 @endif
 
